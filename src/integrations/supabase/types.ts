@@ -14,13 +14,241 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      counters: {
+        Row: {
+          created_at: string
+          id: number
+          is_active: boolean | null
+          name: string
+          officer_id: string | null
+          officer_name: string | null
+          services: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          is_active?: boolean | null
+          name: string
+          officer_id?: string | null
+          officer_name?: string | null
+          services?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          is_active?: boolean | null
+          name?: string
+          officer_id?: string | null
+          officer_name?: string | null
+          services?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "counters_officer_id_fkey"
+            columns: ["officer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          sent_at: string | null
+          status: string
+          token_id: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          sent_at?: string | null
+          status?: string
+          token_id: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          sent_at?: string | null
+          status?: string
+          token_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          citizen_id: string | null
+          created_at: string
+          full_name: string
+          id: string
+          phone: string
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          citizen_id?: string | null
+          created_at?: string
+          full_name: string
+          id?: string
+          phone: string
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          citizen_id?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          phone?: string
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      queue_stats: {
+        Row: {
+          avg_service_time_minutes: number | null
+          avg_wait_time_minutes: number | null
+          completed_tokens: number | null
+          created_at: string
+          date: string
+          id: string
+          peak_queue_size: number | null
+          total_tokens: number | null
+          updated_at: string
+        }
+        Insert: {
+          avg_service_time_minutes?: number | null
+          avg_wait_time_minutes?: number | null
+          completed_tokens?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          peak_queue_size?: number | null
+          total_tokens?: number | null
+          updated_at?: string
+        }
+        Update: {
+          avg_service_time_minutes?: number | null
+          avg_wait_time_minutes?: number | null
+          completed_tokens?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          peak_queue_size?: number | null
+          total_tokens?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tokens: {
+        Row: {
+          called_at: string | null
+          citizen_id: string
+          citizen_name: string
+          citizen_phone: string
+          completed_at: string | null
+          counter_id: number | null
+          created_at: string
+          estimated_time: string | null
+          id: string
+          notes: string | null
+          priority: boolean | null
+          qr_code: string | null
+          served_at: string | null
+          service_type: string
+          status: string
+          time_slot: string
+          token_number: number
+          updated_at: string
+        }
+        Insert: {
+          called_at?: string | null
+          citizen_id: string
+          citizen_name: string
+          citizen_phone: string
+          completed_at?: string | null
+          counter_id?: number | null
+          created_at?: string
+          estimated_time?: string | null
+          id?: string
+          notes?: string | null
+          priority?: boolean | null
+          qr_code?: string | null
+          served_at?: string | null
+          service_type?: string
+          status?: string
+          time_slot: string
+          token_number: number
+          updated_at?: string
+        }
+        Update: {
+          called_at?: string | null
+          citizen_id?: string
+          citizen_name?: string
+          citizen_phone?: string
+          completed_at?: string | null
+          counter_id?: number | null
+          created_at?: string
+          estimated_time?: string | null
+          id?: string
+          notes?: string | null
+          priority?: boolean | null
+          qr_code?: string | null
+          served_at?: string | null
+          service_type?: string
+          status?: string
+          time_slot?: string
+          token_number?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tokens_citizen_id_fkey"
+            columns: ["citizen_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tokens_counter_id_fkey"
+            columns: ["counter_id"]
+            isOneToOne: false
+            referencedRelation: "counters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_token_number: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
