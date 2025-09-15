@@ -5,39 +5,52 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TokenCard } from "@/components/queue/TokenCard";
 import { QueueStats } from "@/components/queue/QueueStats";
-import { useQueue } from "@/hooks/use-queue";
+import { useQueueData } from "@/hooks/use-queue-data";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Token } from "@/types/queue";
-import { ArrowLeft, Search, Play, CheckCircle, XCircle, RotateCcw } from "lucide-react";
+import { ArrowLeft, Search, Play, CheckCircle, XCircle, RotateCcw, Bell } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 export const OfficerDashboard = () => {
-  const { tokens, stats, counters, updateTokenStatus } = useQueue();
+  const { tokens, stats, counters, updateTokenStatus, loading } = useQueueData();
+  const { profile } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCounter, setSelectedCounter] = useState<string>("1");
 
-  const handleStatusUpdate = (token: Token, newStatus: Token['status']) => {
+  const handleStatusUpdate = async (token: any, newStatus: string) => {
     const counterNumber = newStatus === 'serving' ? parseInt(selectedCounter) : undefined;
-    updateTokenStatus(token.id, newStatus, counterNumber);
-    
-    const statusMessages = {
-      serving: `Token #${token.number} is now being served at Counter ${counterNumber}`,
-      completed: `Token #${token.number} has been completed`,
-      'no-show': `Token #${token.number} marked as no-show`
-    };
-    
-    toast({
-      title: "Status Updated",
-      description: statusMessages[newStatus],
-    });
+    await updateTokenStatus(token.id, newStatus as any, counterNumber);
+  };
+
+  const sendReminder = async (token: any) => {
+    try {
+      await supabase.functions.invoke('send-sms-notification', {
+        body: {
+          tokenId: token.id,
+          type: 'reminder'
+        }
+      });
+      
+      toast({
+        title: "Reminder Sent",
+        description: `Reminder sent to token #${token.token_number}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send reminder",
+        variant: "destructive"
+      });
+    }
   };
 
   const filteredTokens = tokens.filter(token => 
-    token.citizenName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    token.citizenId.includes(searchTerm) ||
+    token.citizen_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    token.citizen_phone.includes(searchTerm) ||
     token.id.includes(searchTerm) ||
-    token.number.toString().includes(searchTerm)
+    token.token_number.toString().includes(searchTerm)
   );
 
   const waitingTokens = filteredTokens.filter(t => t.status === 'waiting');
@@ -60,6 +73,9 @@ export const OfficerDashboard = () => {
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Officer Dashboard</h1>
                 <p className="text-muted-foreground">Regional Transport Office - Queue Management</p>
+                {profile && (
+                  <p className="text-sm text-muted-foreground">Welcome, {profile.full_name}</p>
+                )}
               </div>
             </div>
             
@@ -111,12 +127,21 @@ export const OfficerDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {servingTokens.map((token) => (
                 <div key={token.id} className="space-y-2">
-                  <TokenCard token={token} />
+                  <TokenCard token={{
+                    ...token,
+                    number: token.token_number,
+                    citizenName: token.citizen_name,
+                    citizenId: token.citizen_phone,
+                    timeSlot: token.time_slot,
+                    estimatedTime: token.estimated_time,
+                    createdAt: new Date(token.created_at)
+                  }} />
                   <div className="flex gap-2">
                     <Button
                       size="sm"
                       onClick={() => handleStatusUpdate(token, 'completed')}
                       className="flex-1 gap-1"
+                      disabled={loading}
                     >
                       <CheckCircle className="h-4 w-4" />
                       Complete
@@ -126,9 +151,19 @@ export const OfficerDashboard = () => {
                       variant="outline"
                       onClick={() => handleStatusUpdate(token, 'no-show')}
                       className="gap-1"
+                      disabled={loading}
                     >
                       <XCircle className="h-4 w-4" />
                       No Show
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => sendReminder(token)}
+                      className="gap-1"
+                    >
+                      <Bell className="h-4 w-4" />
+                      Remind
                     </Button>
                   </div>
                 </div>
@@ -154,15 +189,35 @@ export const OfficerDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {waitingTokens.map((token) => (
                 <div key={token.id} className="space-y-2">
-                  <TokenCard token={token} />
-                  <Button
-                    size="sm"
-                    onClick={() => handleStatusUpdate(token, 'serving')}
-                    className="w-full gap-1"
-                  >
-                    <Play className="h-4 w-4" />
-                    Call for Service
-                  </Button>
+                  <TokenCard token={{
+                    ...token,
+                    number: token.token_number,
+                    citizenName: token.citizen_name,
+                    citizenId: token.citizen_phone,
+                    timeSlot: token.time_slot,
+                    estimatedTime: token.estimated_time,
+                    createdAt: new Date(token.created_at)
+                  }} />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => handleStatusUpdate(token, 'serving')}
+                      className="flex-1 gap-1"
+                      disabled={loading}
+                    >
+                      <Play className="h-4 w-4" />
+                      Call for Service
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => sendReminder(token)}
+                      className="gap-1"
+                    >
+                      <Bell className="h-4 w-4" />
+                      Remind
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -175,7 +230,15 @@ export const OfficerDashboard = () => {
             <h2 className="text-xl font-semibold">Recently Completed</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {completedTokens.map((token) => (
-                <TokenCard key={token.id} token={token} />
+                <TokenCard key={token.id} token={{
+                  ...token,
+                  number: token.token_number,
+                  citizenName: token.citizen_name,
+                  citizenId: token.citizen_phone,
+                  timeSlot: token.time_slot,
+                  estimatedTime: token.estimated_time,
+                  createdAt: new Date(token.created_at)
+                }} />
               ))}
             </div>
           </div>

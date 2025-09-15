@@ -5,7 +5,7 @@ export interface Token {
   citizenId: string;
   timeSlot: string;
   estimatedTime: string;
-  status: 'waiting' | 'serving' | 'completed' | 'no-show';
+  status: 'waiting' | 'serving' | 'completed' | 'no-show' | 'cancelled';
   counter?: number;
   priority: boolean;
   createdAt: Date;
