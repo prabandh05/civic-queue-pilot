@@ -82,9 +82,24 @@ export const AuthModal = ({ open, onOpenChange, mode: initialMode }: AuthModalPr
         onOpenChange(false);
       }
     } catch (error: any) {
+      let title = "Error";
+      let description = error.message || "An error occurred. Please try again.";
+      
+      // Handle specific error cases
+      if (error.message?.includes("over_email_send_rate_limit")) {
+        title = "Rate Limit Reached";
+        description = "Please wait before trying again. If you already signed up, try signing in instead.";
+      } else if (error.message?.includes("User already registered")) {
+        title = "Account Exists";
+        description = "This email is already registered. Please sign in instead.";
+      } else if (error.message?.includes("Invalid login credentials")) {
+        title = "Invalid Credentials";
+        description = "Please check your email and password and try again.";
+      }
+      
       toast({
-        title: "Error",
-        description: error.message || "An error occurred. Please try again.",
+        title,
+        description,
         variant: "destructive",
       });
     } finally {
