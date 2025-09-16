@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, User, Lock, Phone, CreditCard } from "lucide-react";
@@ -22,8 +22,7 @@ export const AuthModal = ({ open, onOpenChange, mode: initialMode }: AuthModalPr
     password: '',
     fullName: '',
     phone: '',
-    citizenId: '',
-    role: 'citizen'
+    citizenId: ''
   });
   const { toast } = useToast();
 
@@ -37,11 +36,12 @@ export const AuthModal = ({ open, onOpenChange, mode: initialMode }: AuthModalPr
           email: formData.email,
           password: formData.password,
           options: {
+            emailRedirectTo: `${window.location.origin}/`,
             data: {
               full_name: formData.fullName,
               phone: formData.phone,
               citizen_id: formData.citizenId,
-              role: formData.role
+              role: 'citizen'
             }
           }
         });
@@ -57,7 +57,7 @@ export const AuthModal = ({ open, onOpenChange, mode: initialMode }: AuthModalPr
               full_name: formData.fullName,
               phone: formData.phone,
               citizen_id: formData.citizenId,
-              role: formData.role
+              role: 'citizen'
             });
 
           if (profileError) throw profileError;
@@ -99,8 +99,7 @@ export const AuthModal = ({ open, onOpenChange, mode: initialMode }: AuthModalPr
       password: '',
       fullName: '',
       phone: '',
-      citizenId: '',
-      role: 'citizen'
+      citizenId: ''
     });
   };
 
@@ -191,18 +190,6 @@ export const AuthModal = ({ open, onOpenChange, mode: initialMode }: AuthModalPr
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
-                <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="citizen">Citizen</SelectItem>
-                    <SelectItem value="officer">Officer</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </>
           )}
 

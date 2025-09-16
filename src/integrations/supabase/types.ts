@@ -245,9 +245,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_initial_admin: {
+        Args: {
+          admin_email: string
+          admin_name: string
+          admin_password: string
+          admin_phone: string
+        }
+        Returns: undefined
+      }
       generate_token_number: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      make_admin: {
+        Args: { target_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {
