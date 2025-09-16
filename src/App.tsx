@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { Index } from "./pages/Index";
 import { CitizenDashboard } from "./pages/CitizenDashboard";
 import { OfficerDashboard } from "./pages/OfficerDashboard";
-import { NotFound } from "./pages/NotFound";
+import NotFound from "./pages/NotFound";
 import { LiveQueueDisplay } from "./components/queue/LiveQueueDisplay";
 import { useAuth } from "./hooks/use-auth";
 import { Loader2 } from "lucide-react";
