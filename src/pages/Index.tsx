@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, ClipboardCheck, Activity, Shield, LogIn, Monitor } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -11,7 +11,19 @@ export const Index = () => {
     open: false,
     mode: 'signin'
   });
-  const { isAuthenticated, profile, signOut } = useAuth();
+  const { isAuthenticated, profile, signOut, loading } = useAuth();
+  const navigate = useNavigate();
+
+  // Auto-redirect authenticated users to their dashboard
+  useEffect(() => {
+    if (isAuthenticated && profile && !loading) {
+      if (profile.role === 'officer' || profile.role === 'admin') {
+        navigate('/officer');
+      } else if (profile.role === 'citizen') {
+        navigate('/citizen');
+      }
+    }
+  }, [isAuthenticated, profile, loading, navigate]);
 
   const features = [
     {

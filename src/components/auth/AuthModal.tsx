@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, User, Lock, Phone, CreditCard } from "lucide-react";
 
@@ -25,6 +26,24 @@ export const AuthModal = ({ open, onOpenChange, mode: initialMode }: AuthModalPr
     citizenId: ''
   });
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { profile, isAuthenticated } = useAuth();
+
+  // Auto-redirect when user signs in successfully
+  useEffect(() => {
+    if (isAuthenticated && profile && open) {
+      onOpenChange(false);
+      
+      // Redirect based on user role
+      setTimeout(() => {
+        if (profile.role === 'officer' || profile.role === 'admin') {
+          navigate('/officer');
+        } else if (profile.role === 'citizen') {
+          navigate('/citizen');
+        }
+      }, 100);
+    }
+  }, [isAuthenticated, profile, navigate, onOpenChange, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +98,9 @@ export const AuthModal = ({ open, onOpenChange, mode: initialMode }: AuthModalPr
           title: "Signed In",
           description: "Welcome back! You have been signed in successfully.",
         });
-        onOpenChange(false);
+        
+        // Don't close modal immediately - let useEffect handle redirect
+        // The modal will close and redirect will happen in useEffect
       }
     } catch (error: any) {
       let title = "Error";
