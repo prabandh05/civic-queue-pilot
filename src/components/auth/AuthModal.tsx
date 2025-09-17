@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,14 +31,28 @@ export const AuthModal = ({ open, onOpenChange, mode: initialMode }: AuthModalPr
 
   // Auto-redirect when user signs in successfully
   useEffect(() => {
+    console.log('AuthModal useEffect - Auth state:', { isAuthenticated, profile, open });
+    
     if (isAuthenticated && profile && open) {
+      console.log('User authenticated, closing modal and redirecting');
       onOpenChange(false);
+      
+      // Reset form
+      setFormData({
+        email: '',
+        password: '',
+        fullName: '',
+        phone: '',
+        citizenId: ''
+      });
       
       // Redirect based on user role
       setTimeout(() => {
         if (profile.role === 'officer' || profile.role === 'admin') {
+          console.log('Redirecting to officer dashboard');
           navigate('/officer');
         } else if (profile.role === 'citizen') {
+          console.log('Redirecting to citizen dashboard');
           navigate('/citizen');
         }
       }, 100);
@@ -51,6 +65,7 @@ export const AuthModal = ({ open, onOpenChange, mode: initialMode }: AuthModalPr
 
     try {
       if (mode === 'signup') {
+        console.log('Starting signup process');
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
@@ -65,35 +80,64 @@ export const AuthModal = ({ open, onOpenChange, mode: initialMode }: AuthModalPr
           }
         });
 
-        if (authError) throw authError;
+        if (authError) {
+          console.error('Signup auth error:', authError);
+          throw authError;
+        }
 
-        if (authData.user) {
-          // Create profile
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              user_id: authData.user.id,
-              full_name: formData.fullName,
-              phone: formData.phone,
-              citizen_id: formData.citizenId,
-              role: 'citizen'
-            });
+        console.log('Signup successful, auth data:', authData);
 
-          if (profileError) throw profileError;
-
+        if (authData.user && !authData.session) {
+          // User needs to confirm email
           toast({
-            title: "Account Created",
-            description: "Your account has been created successfully. Please check your email to verify your account.",
+            title: "Check Your Email",
+            description: "Please check your email and click the confirmation link to complete your registration.",
           });
+        } else if (authData.user && authData.session) {
+          // User is immediately signed in (email confirmation disabled)
+          console.log('User signed in immediately, creating profile');
+          try {
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .insert({
+                user_id: authData.user.id,
+                full_name: formData.fullName,
+                phone: formData.phone,
+                citizen_id: formData.citizenId,
+                role: 'citizen'
+              });
+
+            if (profileError && profileError.code !== '23505') { // Ignore duplicate key errors
+              console.error('Profile creation error:', profileError);
+              throw profileError;
+            }
+
+            toast({
+              title: "Account Created",
+              description: "Your account has been created successfully!",
+            });
+          } catch (profileError) {
+            console.error('Profile creation failed:', profileError);
+            toast({
+              title: "Account Created",
+              description: "Your account has been created but there was an issue with your profile. Please try signing in.",
+              variant: "destructive",
+            });
+          }
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        console.log('Starting signin process');
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Signin error:', error);
+          throw error;
+        }
 
+        console.log('Signin successful:', data);
         toast({
           title: "Signed In",
           description: "Welcome back! You have been signed in successfully.",
@@ -146,6 +190,12 @@ export const AuthModal = ({ open, onOpenChange, mode: initialMode }: AuthModalPr
           <DialogTitle className="text-center">
             {mode === 'signin' ? 'Sign In' : 'Create Account'}
           </DialogTitle>
+          <DialogDescription className="text-center">
+            {mode === 'signin' 
+              ? 'Sign in to your account to access the queue system' 
+              : 'Create a new account to join the digital queue'
+            }
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">

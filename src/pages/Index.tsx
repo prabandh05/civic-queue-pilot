@@ -16,12 +16,23 @@ export const Index = () => {
 
   // Auto-redirect authenticated users to their dashboard
   useEffect(() => {
-    if (isAuthenticated && profile && !loading) {
-      if (profile.role === 'officer' || profile.role === 'admin') {
-        navigate('/officer');
-      } else if (profile.role === 'citizen') {
-        navigate('/citizen');
-      }
+    console.log('Index useEffect - Auth state:', { isAuthenticated, profile, loading });
+    
+    if (!loading && isAuthenticated && profile) {
+      console.log('Redirecting user based on role:', profile.role);
+      
+      // Add a small delay to prevent redirect loops and ensure smooth transition
+      const timer = setTimeout(() => {
+        if (profile.role === 'officer' || profile.role === 'admin') {
+          console.log('Redirecting to officer dashboard');
+          navigate('/officer');
+        } else if (profile.role === 'citizen') {
+          console.log('Redirecting to citizen dashboard');
+          navigate('/citizen');
+        }
+      }, 500);
+
+      return () => clearTimeout(timer);
     }
   }, [isAuthenticated, profile, loading, navigate]);
 
